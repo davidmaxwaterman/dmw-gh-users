@@ -14,7 +14,12 @@
     "sourceMap": true,
     "inlineSources": true,
     "rootDir": "./",
-    "incremental": true
+    "incremental": true,
+    "plugins": [
+      {
+        "transform": "ts-transformer-keys/transformer"
+      }
+    ]
   },
   "include": ["**/*.ts"]
 }

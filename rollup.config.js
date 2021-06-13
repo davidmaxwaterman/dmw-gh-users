@@ -17,15 +17,22 @@ const baseConfig = createSpaConfig({
   developmentMode: process.env.ROLLUP_WATCH === 'true',
 
   // set to true to inject the service worker registration into your index.html
-  injectServiceWorker: false,
+  injectServiceWorker: true,
 });
 
 export default merge(baseConfig, {
   // if you use createSpaConfig, you can use your index.html as entrypoint,
   // any <script type="module"> inside will be bundled by rollup
   input: './index.html',
-
   // alternatively, you can use your JS as entrypoint for rollup and
   // optionally set a HTML template manually
   // input: './app.js',
+
+  //plugins: [
+    //resolve(),
+    //typescript({ transformers: [service => ({
+      //before: [ keysTransformer(service.getProgram()) ],
+      //after: []
+    //})] })
+  //],
 });
