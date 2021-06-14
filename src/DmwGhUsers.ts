@@ -177,6 +177,7 @@ export class DmwGhUsers extends LitElement {
           label="Search query (hit enter)"
           autofocus
           required
+          clear-button-visible
           @change="${this._onChangeQuery}"
           >
         </vaadin-text-field>
