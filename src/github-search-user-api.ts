@@ -1,9 +1,9 @@
 
 export interface UserDetails {
-  "avatar_url": string,
   "login": string,
   "id": number,
   "node_id": string,
+  "avatar_url": string,
   "gravatar_id": string,
   "url": string,
   "html_url": string,
@@ -29,6 +29,7 @@ export interface FetchResult {
   items: UsersDetails,
 };
 
+/*
 export const testData:FetchResult = {
   "total_count": 244,
   "incomplete_results": false,
@@ -665,3 +666,4 @@ export const testData:FetchResult = {
     }
   ]
 };
+*/

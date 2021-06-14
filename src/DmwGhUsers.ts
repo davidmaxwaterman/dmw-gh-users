@@ -20,19 +20,45 @@ import {
   UserDetails,
   UsersDetails,
   FetchResult,
-  testData,
+  //testData,
 } from './github-search-user-api';
 
 export class DmwGhUsers extends LitElement {
   @property({ type: String }) title = 'Search Github Users';
 
-  @state()
-    private _userDetails: UserDetails[] = [];
-
   _userDetailsKeys = keys<UserDetails>();
 
   @state()
+  private _displayKeys: string[] = [
+    "avatar_url",
+    "login",
+    //"id",
+    //"node_id",
+    //"gravatar_id",
+    //"url",
+    //"html_url",
+    //"followers_url",
+    //"following_url",
+    //"gists_url",
+    //"starred_url",
+    //"subscriptions_url",
+    //"organizations_url",
+    //"repos_url",
+    //"events_url",
+    //"received_events_url",
+    //"type",
+    //"site_admin",
+    //"score",
+  ];
+
+  @state()
+    private _userDetails: UserDetails[] = [];
+
+  @state()
     private _searchQuery: string = '';
+
+  @state()
+    private _numResults: number = 0;
 
   getData = async (params: GridDataProviderParams, callback: GridDataProviderCallback) => {
     if (this._searchQuery === '') {
@@ -56,10 +82,10 @@ export class DmwGhUsers extends LitElement {
           console.log('fetchResult:', fetchResult);
 
           // github api limits results to 1000 - but still seems to return more total_count
-          const limitedTotal = Math.min(fetchResult.total_count, 1000);
+          this._numResults = Math.min(fetchResult.total_count, 1000);
           callback(
             fetchResult.items,
-            limitedTotal,
+            this._numResults,
           );
         } else {
           const fetchResult = await response.json();
@@ -145,6 +171,10 @@ export class DmwGhUsers extends LitElement {
       flex-direction: column;
     }
 
+    #num_results {
+      width: fit-content;
+    }
+
     img.avatar_url {
       height: 50px;
     }
@@ -158,7 +188,14 @@ export class DmwGhUsers extends LitElement {
 
     const element =
       (isAvatarUrl)
-      ?html`<img src=${item[header]} class="avatar_url">`
+      ?html`
+      <a href="${item['html_url']}">
+        <img
+          src=${item[header]}
+          class="avatar_url"
+          alt="avatar for ${item['login']}">
+      </a>
+      `
       :html`<div>${item[header]}</div>`;
 
     render(
@@ -182,6 +219,8 @@ export class DmwGhUsers extends LitElement {
           >
         </vaadin-text-field>
 
+        <div id="num_results">Number of results: ${this._numResults}</div>
+
         <div id="grid_container">
 
           <vaadin-grid
@@ -189,7 +228,9 @@ export class DmwGhUsers extends LitElement {
             .dataProvider=${this.getData}
             >
 
-            ${this._userDetailsKeys.map(key => html`
+            ${this._userDetailsKeys
+              .filter(key => this._displayKeys.includes(key))
+              .map(key => html`
               <vaadin-grid-column
                 .renderer=${this.columnRenderer}
                 header="${key}"
