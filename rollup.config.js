@@ -18,6 +18,9 @@ const baseConfig = createSpaConfig({
 
   // set to true to inject the service worker registration into your index.html
   injectServiceWorker: true,
+  workbox: {
+    navigateFallback: './index.html',
+  },
 });
 
 export default merge(baseConfig, {
