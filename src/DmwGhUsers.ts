@@ -4,15 +4,16 @@ import { render } from 'lit/html.js';
 
 import { keys } from 'ts-transformer-keys';
 
-import {
+import type {
   GridElement,
   GridDataProviderParams,
   GridDataProviderCallback,
 } from '@vaadin/vaadin-grid';
-
-import '@vaadin/vaadin-grid/vaadin-grid-column';
+import '@vaadin/vaadin-grid/vaadin-grid';
+import '@vaadin/vaadin-grid/vaadin-grid-column.js';
 import '@vaadin/vaadin-grid/theme/lumo/vaadin-grid-styles';
-import { TextFieldElement } from '@vaadin/vaadin-text-field';
+import type { TextFieldElement } from '@vaadin/vaadin-text-field';
+import '@vaadin/vaadin-text-field/vaadin-text-field';
 
 import {
   UserDetails,
