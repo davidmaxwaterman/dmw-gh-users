@@ -1,27 +1,23 @@
-import { LitElement, html, css, property, state, } from 'lit-element';
-import { render } from 'lit-html';
+import { LitElement, html, css } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { render } from 'lit/html.js';
+
 import { keys } from 'ts-transformer-keys';
 
 import {
   GridElement,
-  GridDataProvider,
   GridDataProviderParams,
   GridDataProviderCallback,
 } from '@vaadin/vaadin-grid';
-import '@vaadin/vaadin-grid/vaadin-grid';
+
 import '@vaadin/vaadin-grid/vaadin-grid-column';
 import '@vaadin/vaadin-grid/theme/lumo/vaadin-grid-styles';
-import {
-  TextFieldElement,
-} from '@vaadin/vaadin-text-field';
-import '@vaadin/vaadin-text-field/vaadin-text-field';
+import { TextFieldElement } from '@vaadin/vaadin-text-field';
 
 import {
   UserDetails,
-  UsersDetails,
-  FetchResult,
-  //testData,
-} from './github-search-user-api';
+  // testData,
+} from './github-search-user-api.js';
 
 export class DmwGhUsers extends LitElement {
   @property({ type: String }) title = 'Search Github Users';
@@ -30,52 +26,53 @@ export class DmwGhUsers extends LitElement {
 
   @state()
   private _displayKeys: string[] = [
-    "avatar_url",
-    "login",
-    //"id",
-    //"node_id",
-    //"gravatar_id",
-    //"url",
-    //"html_url",
-    //"followers_url",
-    //"following_url",
-    //"gists_url",
-    //"starred_url",
-    //"subscriptions_url",
-    //"organizations_url",
-    //"repos_url",
-    //"events_url",
-    //"received_events_url",
-    //"type",
-    //"site_admin",
-    //"score",
+    'avatar_url',
+    'login',
+    // "id",
+    // "node_id",
+    // "gravatar_id",
+    // "url",
+    // "html_url",
+    // "followers_url",
+    // "following_url",
+    // "gists_url",
+    // "starred_url",
+    // "subscriptions_url",
+    // "organizations_url",
+    // "repos_url",
+    // "events_url",
+    // "received_events_url",
+    // "type",
+    // "site_admin",
+    // "score",
   ];
 
   @state()
-    private _userDetails: UserDetails[] = [];
+  private _userDetails: UserDetails[] = [];
 
   @state()
-    private _searchQuery: string = '';
+  private _searchQuery: string = '';
 
   @state()
-    private _numResults: number = 0;
+  private _numResults: number = 0;
 
-  getData = async (params: GridDataProviderParams, callback: GridDataProviderCallback) => {
+  getData = async (
+    params: GridDataProviderParams,
+    callback: GridDataProviderCallback
+  ) => {
     if (this._searchQuery === '') {
       console.info('Empty searchQuery so not calling API');
       // make empty list
-      callback([],0);
+      callback([], 0);
     } else {
-      // we have a query, so get some results from the server
-      const { page:zeroBasedPage, pageSize, } = params;
-      const oneBasedPage = zeroBasedPage + 1;
-      const search = this._searchQuery;
-
-      console.log('getData:oneBasedPage:', oneBasedPage);
-      console.log('getData:pageSize:', pageSize);
-
-      const attemptAFetch = async (search: string, oneBasedPage: number, pageSize: number) => {
-        const response = await fetch(`https://api.github.com/search/users?q=${search}&page=${oneBasedPage}&per_page=${pageSize}`);
+      const attemptAFetch = async (
+        search: string,
+        oneBasedPage: number,
+        pageSize: number
+      ) => {
+        const response = await fetch(
+          `https://api.github.com/search/users?q=${search}&page=${oneBasedPage}&per_page=${pageSize}`
+        );
         if (response.ok) {
           const fetchResult = await response.json();
 
@@ -83,14 +80,13 @@ export class DmwGhUsers extends LitElement {
 
           // github api limits results to 1000 - but still seems to return more total_count
           this._numResults = Math.min(fetchResult.total_count, 1000);
-          callback(
-            fetchResult.items,
-            this._numResults,
-          );
+          callback(fetchResult.items, this._numResults);
         } else {
           const fetchResult = await response.json();
           console.info('fetch not ok', fetchResult);
-          const failedDueToRateLimit = fetchResult.message.startsWith('API rate limit exceeded');
+          const failedDueToRateLimit = fetchResult.message.startsWith(
+            'API rate limit exceeded'
+          );
           if (failedDueToRateLimit) {
             // check header for X-RateLimit-Reset
             console.log(response.headers);
@@ -100,7 +96,8 @@ export class DmwGhUsers extends LitElement {
               const oneSecond = 1000; // milliseconds
               const resetTime = new Date(+xRateLimitReset * oneSecond);
               const leeway = oneSecond;
-              const tryAgainAfter = resetTime.getTime() - now.getTime() + leeway;
+              const tryAgainAfter =
+                resetTime.getTime() - now.getTime() + leeway;
               const id = setTimeout(async () => {
                 await attemptAFetch(search, oneBasedPage, pageSize);
               }, tryAgainAfter);
@@ -110,8 +107,15 @@ export class DmwGhUsers extends LitElement {
             }
           }
         }
-
       };
+
+      // we have a query, so get some results from the server
+      const { page: zeroBasedPage, pageSize } = params;
+      const oneBasedPage = zeroBasedPage + 1;
+      const search = this._searchQuery;
+
+      console.log('getData:oneBasedPage:', oneBasedPage);
+      console.log('getData:pageSize:', pageSize);
 
       await attemptAFetch(search, oneBasedPage, pageSize);
 
@@ -180,28 +184,25 @@ export class DmwGhUsers extends LitElement {
     }
   `;
 
-  columnRenderer(root:any, column:any, model:any) {
-    const {item} = model;
+  columnRenderer = (root: any, column: any, model: any) => {
+    const { item } = model;
     const header = column.getAttribute('header');
 
-    const isAvatarUrl = header==='avatar_url';
+    const isAvatarUrl = header === 'avatar_url';
 
-    const element =
-      (isAvatarUrl)
-      ?html`
-      <a href="${item['html_url']}">
-        <img
-          src=${item[header]}
-          class="avatar_url"
-          alt="avatar for ${item['login']}">
-      </a>
-      `
-      :html`<div>${item[header]}</div>`;
+    const element = isAvatarUrl
+      ? html`
+          <a href="${item.html_url}">
+            <img
+              src=${item[header]}
+              class="avatar_url"
+              alt="avatar for ${item.login}"
+            />
+          </a>
+        `
+      : html`<div>${item[header]}</div>`;
 
-    render(
-      element,
-      root
-    );
+    render(element, root);
   };
 
   render() {
@@ -212,37 +213,31 @@ export class DmwGhUsers extends LitElement {
         <vaadin-text-field
           id="query"
           label="Search query (hit enter)"
-          autofocus
           required
           clear-button-visible
           @change="${this._onChangeQuery}"
-          >
+        >
         </vaadin-text-field>
 
         <div id="num_results">Number of results: ${this._numResults}</div>
 
         <div id="grid_container">
-
-          <vaadin-grid
-            id="grid"
-            .dataProvider=${this.getData}
-            >
-
+          <vaadin-grid id="grid" .dataProvider=${this.getData}>
             ${this._userDetailsKeys
               .filter(key => this._displayKeys.includes(key))
-              .map(key => html`
-              <vaadin-grid-column
-                .renderer=${this.columnRenderer}
-                header="${key}"
-                >
-              <vaadin-grid-column>
-            `)}
-
+              .map(
+                key => html`
+                  <vaadin-grid-column
+                    .renderer=${this.columnRenderer}
+                    header="${key}"
+                  >
+                    <vaadin-grid-column> </vaadin-grid-column
+                  ></vaadin-grid-column>
+                `
+              )}
           </vaadin-grid>
-
         </div>
       </main>
     `;
-  };
-
+  }
 }
