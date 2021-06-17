@@ -156,6 +156,9 @@ export class DmwGhUsers extends LitElement {
       color: #1a2b42;
       text-align: center;
       background-color: var(--dmw-gh-users-background-color);
+
+      --grid-row-height: 50px;
+      --grid-anchor-border-width: 1px;
     }
 
     main {
@@ -180,8 +183,25 @@ export class DmwGhUsers extends LitElement {
       width: fit-content;
     }
 
+    .grid_cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: calc(
+        var(--grid-row-height) + var(--grid-anchor-border-width) * 2
+      );
+      margin: 10px 0;
+    }
+
+    .image_anchor {
+      --image-anchor-size: var(--grid-row-height);
+      height: var(--image-anchor-size);
+      width: var(--image-anchor-size);
+      outline: var(--grid-anchor-border-width) solid blue;
+    }
+
     img.avatar_url {
-      height: 50px;
+      height: var(--grid-row-height);
     }
   `;
 
@@ -191,17 +211,32 @@ export class DmwGhUsers extends LitElement {
 
     const isAvatarUrl = header === 'avatar_url';
 
-    const element = isAvatarUrl
-      ? html`
-          <a href="${item.html_url}">
-            <img
-              src=${item[header]}
-              class="avatar_url"
-              alt="avatar for ${item.login}"
-            />
-          </a>
-        `
-      : html`<div>${item[header]}</div>`;
+    let element = html``;
+
+    if (isAvatarUrl) {
+      const liveImage = new Image();
+      liveImage.classList.add('avatar_url');
+      liveImage.src = '';
+
+      // asynchronously load the image
+      // when loaded, set the src of the live image
+      const imageLoader = new Image();
+      imageLoader.addEventListener('load', async () => {
+        // image has loaded and should be in cache
+        liveImage.setAttribute('alt', `avatar for ${item.login}`);
+        liveImage.src = item.avatar_url;
+      });
+
+      imageLoader.src = item.avatar_url;
+
+      element = html`
+        <a class="image_anchor" href="${item.html_url}"> ${liveImage} </a>
+      `;
+    } else {
+      element = html`<div>${item[header]}</div>`;
+    }
+
+    root.classList.add('grid_cell');
 
     render(element, root);
   };
