@@ -95,7 +95,7 @@ export class DmwGhUsers extends LitElement {
         const response = await fetch(`https://api.github.com/graphql`, {
           method: 'POST',
           headers: {
-            Authorization: `bearer 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`,
+            Authorization: `bearer CERTIFICATE`,
           },
           body: gqlQuery,
         });
