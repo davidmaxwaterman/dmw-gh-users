@@ -68,20 +68,48 @@ export class DmwGhUsers extends LitElement {
     } else {
       const attemptAFetch = async (
         search: string,
-        oneBasedPage: number,
+        zeroBasedPage: number,
         pageSize: number
       ) => {
-        const response = await fetch(
-          `https://api.github.com/search/users?q=${search}&page=${oneBasedPage}&per_page=${pageSize}`
-        );
+        const first = pageSize;
+        const after = window.btoa(`cursor:${zeroBasedPage * pageSize}`);
+        const gqlQuery = JSON.stringify({
+          query: `
+          {
+            search(query: "${this._searchQuery}", type: USER, first: ${first}, after: "${after}") {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              userCount
+              nodes {
+                ... on User {
+                  avatarUrl
+                  login
+                  url
+                }
+              }
+            }
+          }`,
+        });
+        const response = await fetch(`https://api.github.com/graphql`, {
+          method: 'POST',
+          headers: {
+            Authorization: `bearer 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`,
+          },
+          body: gqlQuery,
+        });
+
         if (response.ok) {
           const fetchResult = await response.json();
 
           console.log('fetchResult:', fetchResult);
 
+          const { userCount, nodes: items } = fetchResult.data.search;
+
           // github api limits results to 1000 - but still seems to return more total_count
-          this._numResults = Math.min(fetchResult.total_count, 1000);
-          callback(fetchResult.items, this._numResults);
+          this._numResults = Math.min(userCount, 1000);
+          callback(items, this._numResults);
         } else {
           const fetchResult = await response.json();
           console.info('fetch not ok', fetchResult);
@@ -100,7 +128,7 @@ export class DmwGhUsers extends LitElement {
               const tryAgainAfter =
                 resetTime.getTime() - now.getTime() + leeway;
               const id = setTimeout(async () => {
-                await attemptAFetch(search, oneBasedPage, pageSize);
+                await attemptAFetch(search, zeroBasedPage, pageSize);
               }, tryAgainAfter);
               console.log('queuing new fetch:', id, resetTime);
             } else {
@@ -112,13 +140,12 @@ export class DmwGhUsers extends LitElement {
 
       // we have a query, so get some results from the server
       const { page: zeroBasedPage, pageSize } = params;
-      const oneBasedPage = zeroBasedPage + 1;
       const search = this._searchQuery;
 
-      console.log('getData:oneBasedPage:', oneBasedPage);
+      console.log('getData:zeroBasedPage:', zeroBasedPage);
       console.log('getData:pageSize:', pageSize);
 
-      await attemptAFetch(search, oneBasedPage, pageSize);
+      await attemptAFetch(search, zeroBasedPage, pageSize);
 
       /*
       // Use test data to speed development, working offline, and save api calls on github
@@ -215,25 +242,31 @@ export class DmwGhUsers extends LitElement {
 
     if (isAvatarUrl) {
       const liveImage = new Image();
-      liveImage.classList.add('avatar_url');
-      liveImage.src = '';
 
-      // asynchronously load the image
-      // when loaded, set the src of the live image
-      const imageLoader = new Image();
-      imageLoader.addEventListener('load', async () => {
-        // image has loaded and should be in cache
-        liveImage.setAttribute(
-          'alt',
-          `Visit profile for ${item.login} (opens in new tab)`
-        );
-        liveImage.src = item.avatar_url;
-      });
+      // sometimes the data is empty, so this will avoid a request for an '/undefined' image
+      if (item.avatarUrl) {
+        liveImage.classList.add('avatar_url');
+        liveImage.src = '';
 
-      imageLoader.src = item.avatar_url;
+        // asynchronously load the image
+        // when loaded, set the src of the live image
+        const imageLoader = new Image();
+        imageLoader.addEventListener('load', async () => {
+          // image has loaded and should be in cache
+          liveImage.setAttribute(
+            'alt',
+            `Visit profile for ${item.login} (opens in new tab)`
+          );
+          liveImage.src = item.avatarUrl;
+        });
+
+        imageLoader.src = item.avatarUrl;
+      }
 
       element = html`
-        <a class="image_anchor" href="${item.html_url}"> ${liveImage} </a>
+        <a class="image_anchor" target="_blank" href="${item.url}">
+          ${liveImage}
+        </a>
       `;
     } else {
       element = html`<div>${item[header]}</div>`;
