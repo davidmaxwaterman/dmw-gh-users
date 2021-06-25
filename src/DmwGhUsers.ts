@@ -223,7 +223,10 @@ export class DmwGhUsers extends LitElement {
       const imageLoader = new Image();
       imageLoader.addEventListener('load', async () => {
         // image has loaded and should be in cache
-        liveImage.setAttribute('alt', `avatar for ${item.login}`);
+        liveImage.setAttribute(
+          'alt',
+          `Visit profile for ${item.login} (opens in new tab)`
+        );
         liveImage.src = item.avatar_url;
       });
 
